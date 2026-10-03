@@ -2,6 +2,11 @@ name: Build ChatGPT Plugin
 
 on:
   workflow_dispatch:
+    inputs:
+      chatgpt_app_id:
+        description: Optional existing ChatGPT MCP App ID (asdk_app_... or plugin_asdk_app_...)
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -17,16 +22,26 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
-      - name: Build installable plugin ZIP
+      - name: Build direct MCP portable plugin ZIP
         run: npm run plugin:build
-      - name: Verify archive root
+      - name: Verify direct archive root
         run: |
           unzip -l dist/personaldb-memory-plugin.zip
           unzip -p dist/personaldb-memory-plugin.zip plugin.json >/dev/null
           unzip -p dist/personaldb-memory-plugin.zip mcp.json >/dev/null
-      - name: Upload installable plugin
+      - name: Upload direct MCP plugin
         uses: actions/upload-artifact@v4
         with:
           name: personaldb-memory-chatgpt-plugin
           path: dist/personaldb-memory-plugin.zip
+          if-no-files-found: error
+      - name: Build app-reference plugin ZIP
+        if: ${{ inputs.chatgpt_app_id != '' }}
+        run: npm run plugin:build:app -- --app-id=${{ inputs.chatgpt_app_id }}
+      - name: Upload app-reference plugin
+        if: ${{ inputs.chatgpt_app_id != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: personaldb-memory-chatgpt-app-plugin
+          path: dist/personaldb-memory-app-plugin.zip
           if-no-files-found: error
