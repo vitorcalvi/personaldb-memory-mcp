@@ -1,0 +1,34 @@
+name: Build ChatGPT Plugin
+
+on:
+  workflow_dispatch:
+    inputs:
+      mcp_url:
+        description: Production PersonalDB MCP URL ending in /mcp
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - name: Build installable plugin ZIP
+        env:
+          PERSONALDB_MCP_URL: ${{ inputs.mcp_url }}
+        run: npm run plugin:build
+      - name: Upload installable plugin
+        uses: actions/upload-artifact@v4
+        with:
+          name: personaldb-memory-chatgpt-plugin
+          path: dist/personaldb-memory-plugin.zip
+          if-no-files-found: error
