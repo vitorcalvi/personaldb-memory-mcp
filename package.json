@@ -1,6 +1,6 @@
 {
   "name": "personaldb-memory-mcp",
-  "version": "0.3.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "OAuth 2.1 remote memory MCP using Cloudflare D1 FTS5 + Vectorize + RRF for Ava Mobile, My Thoughs, and ChatGPT",
