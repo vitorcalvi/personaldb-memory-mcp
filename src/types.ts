@@ -1,12 +1,20 @@
 export interface Env {
   DB: D1Database;
   VECTORIZE?: VectorizeIndex;
+  OAUTH_KV: KVNamespace;
   AUTH_HMAC_SECRET: string;
+  GITHUB_CLIENT_ID: string;
+  GITHUB_CLIENT_SECRET: string;
+  ALLOWED_GITHUB_LOGINS?: string;
   EMBEDDING_DIMENSIONS?: string;
   RRF_K?: string;
 }
 
-export interface AuthContext { userId: string }
+export interface AuthContext {
+  userId: string;
+  name?: string;
+  nickname?: string;
+}
 
 export interface ChunkInput {
   id?: string;
