@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "personaldb-memory",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Private persistent memory and hybrid search for ChatGPT with zero-config Cloudflare account sign-in.",
   "author": {
     "name": "Vitor Calvi",
@@ -98,7 +98,7 @@
         "commerce": false
       },
       "publication": {
-        "release_notes": "Fix ChatGPT web packaging: reference an existing ChatGPT App through .app.json; direct MCP declarations are no longer emitted because OpenAI marks them Desktop only. Adds a separate complete source bundle."
+        "release_notes": "Use the current portable Agent Plugins package format with root plugin.json and mcp.json. Remove the pre-created ChatGPT App ID requirement and legacy app-reference packaging."
       }
     }
   }
