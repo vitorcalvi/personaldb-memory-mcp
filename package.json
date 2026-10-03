@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "Cloudflare D1 FTS5 + Vectorize + RRF hybrid memory MCP for Ava Mobile, My Thoughs, and ChatGPT",
+  "description": "OAuth 2.1 remote memory MCP using Cloudflare D1 FTS5 + Vectorize + RRF for Ava Mobile, My Thoughs, and ChatGPT",
   "scripts": {
     "dev": "wrangler dev --local --port 8787 --var AUTH_HMAC_SECRET:local-development-secret-change-me",
     "typecheck": "tsc --noEmit",
