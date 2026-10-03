@@ -1,0 +1,36 @@
+{
+  "name": "personaldb-memory-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare D1 FTS5 + Vectorize + RRF hybrid memory MCP for Ava Mobile and My Thoughs",
+  "scripts": {
+    "dev": "wrangler dev --local --port 8787 --var AUTH_HMAC_SECRET:local-development-secret-change-me",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "check": "npm run typecheck && npm run lint && npm test",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "local:smoke": "node scripts/local-smoke.mjs",
+    "benchmark": "node scripts/benchmark.mjs",
+    "token": "node scripts/issue-token.mjs",
+    "deploy": "wrangler deploy --env production"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "2.0.0",
+    "agents": "0.26.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261003.1",
+    "@eslint/js": "^9.37.0",
+    "eslint": "^9.37.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.45.0",
+    "vitest": "^3.2.4",
+    "wrangler": "4.147.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
