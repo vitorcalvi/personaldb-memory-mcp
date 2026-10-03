@@ -15,13 +15,20 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
-      - name: Validate ChatGPT portable plugin package
+      - name: Validate direct MCP portable plugin package
         run: npm run plugin:build
-      - name: Verify plugin ZIP structure
+      - name: Verify direct plugin ZIP structure
         run: |
           unzip -p dist/personaldb-memory-plugin.zip plugin.json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const j=JSON.parse(s);if(j.name!=='personaldb-memory')process.exit(1)})"
           unzip -p dist/personaldb-memory-plugin.zip mcp.json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const j=JSON.parse(s);const x=j.mcpServers?.['personaldb-memory'];if(!x||x.type!=='streamable-http'||!x.url.startsWith('https://'))process.exit(1)})"
           test -n "$(unzip -Z1 dist/personaldb-memory-plugin.zip | grep '^skills/personaldb-memory/SKILL.md$')"
+      - name: Validate web/workspace app-reference plugin package
+        run: npm run plugin:build:app -- --app-id=plugin_asdk_app_test_fixture
+      - name: Verify app-reference ZIP structure
+        run: |
+          unzip -p dist/personaldb-memory-app-plugin.zip plugin.json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const j=JSON.parse(s);if(j.extensions?.['com.openai']?.apps!=='./.app.json')process.exit(1)})"
+          unzip -p dist/personaldb-memory-app-plugin.zip .app.json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const j=JSON.parse(s);if(j.apps?.['personaldb-memory']?.id!=='asdk_app_test_fixture')process.exit(1)})"
+          if unzip -Z1 dist/personaldb-memory-app-plugin.zip | grep -q '^mcp.json$'; then echo 'app-reference ZIP must not include mcp.json'; exit 1; fi
       - name: Validate complete source bundle
         run: npm run plugin:source
       - name: Local Wrangler integration + isolation test
