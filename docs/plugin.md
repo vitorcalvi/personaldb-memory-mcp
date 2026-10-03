@@ -1,12 +1,10 @@
 # ChatGPT plugin packaging and installation
 
-PersonalDB has two different distributable artifacts. Do not confuse them.
+PersonalDB supports two distinct plugin package modes. Do not mix them in one ZIP.
 
-## 1. Installable ChatGPT plugin ZIP
+## A. Direct MCP portable ZIP
 
-The installable ZIP follows the current portable Agent Plugins format. It contains the plugin manifest, remote MCP declaration, skill, listing assets, and policy documents. The Cloudflare Worker itself remains remote and is not bundled.
-
-Build it with:
+Use this for the current portable Agent Plugins format and Desktop/direct-MCP testing.
 
 ```bash
 npm run plugin:build
@@ -22,23 +20,43 @@ The ZIP root contains:
 
 - `plugin.json` — canonical Agent Plugins manifest
 - `mcp.json` — production `streamable-http` MCP endpoint
-- `skills/personaldb-memory/SKILL.md` — workflow instructions
-- `assets/icon.svg` and `assets/logo.svg` — listing assets
+- `skills/personaldb-memory/SKILL.md`
+- `assets/icon.svg` and `assets/logo.svg`
 - `PRIVACY.md`, `TERMS.md`, and `SUPPORT.md`
 
-The package intentionally does **not** include `.app.json`, does not require a pre-created `plugin_asdk_app...` id, and does not emit a second legacy MCP declaration. This avoids ambiguous plugin roots and incompatible portable/legacy MCP mappings.
-
-The MCP endpoint currently packaged is:
+The MCP endpoint is:
 
 ```text
 https://personaldb-memory-mcp-production.vitorcalvi.workers.dev/mcp
 ```
 
-Authentication is handled by the MCP service through Cloudflare Access Managed OAuth.
+This package intentionally contains no `.app.json` and no `.codex-plugin` overlay, which prevents duplicate or conflicting MCP declarations.
 
-## 2. Complete source bundle
+## B. Existing ChatGPT MCP App reference ZIP
 
-For auditing, backup, self-hosting, or release distribution of the entire implementation:
+Use this when ChatGPT has already registered the PersonalDB MCP through **Create MCP App** and you want the plugin to reference that existing app for web/workspace use.
+
+1. In ChatGPT, create the MCP App with the production MCP URL.
+2. Copy the app's technical ID. Browser URLs may show `plugin_asdk_app_...`; `.app.json` requires `asdk_app_...` without the leading `plugin_` wrapper.
+3. Build:
+
+```bash
+npm run plugin:build:app -- --app-id=asdk_app_...
+```
+
+You may also paste `plugin_asdk_app_...`; the builder normalizes it automatically.
+
+Output:
+
+```text
+dist/personaldb-memory-app-plugin.zip
+```
+
+This ZIP contains root `plugin.json` plus `.app.json`, the skill, assets, and policy documents. It intentionally does **not** contain `mcp.json`.
+
+## Complete source bundle
+
+For auditing, backup, self-hosting, or release distribution of the full implementation:
 
 ```bash
 npm run plugin:source
@@ -50,19 +68,25 @@ Output:
 dist/personaldb-memory-mcp-source.zip
 ```
 
-That archive contains the Worker source, migrations, tests, build/deploy scripts, docs, skills, assets, manifests, and package lock. It is **not** the file to upload as a ChatGPT plugin.
+The source bundle is not the ChatGPT install ZIP.
 
-## Install in ChatGPT
+## Installation
 
-When your account exposes plugin ZIP upload:
+### Direct package
 
 1. Run `npm run plugin:build`.
 2. Open ChatGPT → Plugins → Add → Upload plugin.
 3. Upload `dist/personaldb-memory-plugin.zip`.
-4. Complete the Cloudflare authorization flow when ChatGPT connects to the MCP server.
-5. Test `memory_health`, then `memory_add`, then `memory_search`.
+4. Complete Cloudflare authorization when ChatGPT connects to the MCP server.
 
-If you deliberately want to reference an already-registered ChatGPT MCP app instead, use an `.app.json`-based package as a separate distribution mode. Do not mix that mode with the direct portable `mcp.json` package.
+### App-reference package
+
+1. Open ChatGPT → Plugins → Add → Create MCP App.
+2. Register `https://personaldb-memory-mcp-production.vitorcalvi.workers.dev/mcp` and complete OAuth setup.
+3. Build the app-reference ZIP with the resulting app ID.
+4. Upload `dist/personaldb-memory-app-plugin.zip`.
+
+After installation, test `memory_health`, then `memory_add`, then `memory_search`.
 
 ## Public submission readiness
 
