@@ -3,8 +3,8 @@ name: Build ChatGPT Plugin
 on:
   workflow_dispatch:
     inputs:
-      mcp_url:
-        description: Production PersonalDB MCP URL ending in /mcp
+      chatgpt_app_id:
+        description: Existing ChatGPT App ID for the PersonalDB MCP
         required: true
         type: string
 
@@ -24,7 +24,7 @@ jobs:
       - run: npm run check
       - name: Build installable plugin ZIP
         env:
-          PERSONALDB_MCP_URL: ${{ inputs.mcp_url }}
+          PERSONALDB_CHATGPT_APP_ID: ${{ inputs.chatgpt_app_id }}
         run: npm run plugin:build
       - name: Upload installable plugin
         uses: actions/upload-artifact@v4
