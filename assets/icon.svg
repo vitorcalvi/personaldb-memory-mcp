@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="PersonalDB Memory">
+  <rect width="256" height="256" rx="56" fill="#111827"/>
+  <ellipse cx="128" cy="72" rx="62" ry="28" fill="#F9FAFB"/>
+  <path d="M66 72v56c0 15 28 28 62 28s62-13 62-28V72" fill="none" stroke="#F9FAFB" stroke-width="18"/>
+  <path d="M66 128v56c0 15 28 28 62 28s62-13 62-28v-56" fill="none" stroke="#F9FAFB" stroke-width="18"/>
+  <circle cx="128" cy="184" r="10" fill="#111827"/>
+</svg>
