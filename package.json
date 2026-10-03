@@ -1,6 +1,6 @@
 {
   "name": "personaldb-memory-mcp",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "private": true,
   "type": "module",
   "description": "Zero-config Cloudflare Access protected memory MCP using D1 FTS5 + Vectorize + RRF for ChatGPT, Ava Mobile, and My Thoughs",
