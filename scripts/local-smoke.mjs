@@ -22,8 +22,16 @@ try{
  r=await req('/v1/records/upsert',a,{method:'POST',body:JSON.stringify({id:idA,type:'memory',version:1,device_id:'device-a',content:'alpha private memory',metadata:{context:'general',importance:8}})}); const idem=await r.json(); if(idem.status!=='idempotent_noop')throw new Error('repeated sync not idempotent');
  r=await req(`/v1/records/${idA}`,a,{method:'DELETE',body:JSON.stringify({version:2,device_id:'device-a'})}); if(!r.ok)throw new Error('delete failed');
  r=await req('/v1/records/upsert',a,{method:'POST',body:JSON.stringify({id:idA,type:'memory',version:3,device_id:'device-a',content:'resurrect attempt',metadata:{}})}); if(r.status!==409)throw new Error(`deleted record resurrected: ${r.status}`);
- r=await req('/mcp',a,{method:'POST',headers:{'accept':'application/json, text/event-stream'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/list',params:{}})}); const m=await r.text(); if(!m.includes('memory_search')||!m.includes('personaldb_search'))throw new Error(`MCP tools missing: ${m.slice(0,200)}`);
- console.log('LOCAL_SMOKE_OK isolation idempotency tombstone fts fallback mcp');
+
+ r=await fetch('http://127.0.0.1:8791/mcp',{method:'POST',headers:{accept:'application/json, text/event-stream','content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/list',params:{}})});
+ if(r.status!==401)throw new Error(`unauthenticated MCP should challenge with 401, got ${r.status}`);
+ const challenge=r.headers.get('www-authenticate')??'';
+ if(!challenge.toLowerCase().includes('bearer')||!challenge.includes('resource_metadata'))throw new Error(`OAuth MCP challenge missing metadata: ${challenge}`);
+ r=await fetch('http://127.0.0.1:8791/.well-known/oauth-protected-resource/mcp');
+ if(!r.ok)throw new Error(`protected resource metadata failed: ${r.status}`);
+ const metadata=await r.json();
+ if(metadata.resource!=='http://127.0.0.1:8791/mcp'||!Array.isArray(metadata.authorization_servers))throw new Error('invalid protected resource metadata');
+ console.log('LOCAL_SMOKE_OK isolation idempotency tombstone fts fallback oauth discovery');
 } finally {
   if (worker.pid) {
     try { process.kill(-worker.pid, 'SIGTERM'); } catch { /* already stopped */ }
