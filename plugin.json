@@ -1,0 +1,37 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "personaldb-memory",
+  "version": "0.3.0",
+  "description": "Private persistent memory and hybrid search for ChatGPT, backed by PersonalDB over MCP.",
+  "author": {
+    "name": "Vitor Calvi",
+    "url": "https://github.com/vitorcalvi"
+  },
+  "homepage": "https://github.com/vitorcalvi/personaldb-memory-mcp",
+  "repository": "https://github.com/vitorcalvi/personaldb-memory-mcp",
+  "license": "MIT",
+  "keywords": ["memory", "mcp", "personaldb", "retrieval", "chatgpt"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "PersonalDB Memory",
+        "shortDescription": "Private persistent memory and retrieval for ChatGPT.",
+        "longDescription": "Store, retrieve, update, delete, and search private PersonalDB memories through an OAuth-protected MCP server with lexical and semantic retrieval.",
+        "developerName": "Vitor Calvi",
+        "category": "Productivity",
+        "capabilities": ["Read", "Write"],
+        "websiteURL": "https://github.com/vitorcalvi/personaldb-memory-mcp",
+        "privacyPolicyURL": "https://github.com/vitorcalvi/personaldb-memory-mcp/blob/main/PRIVACY.md",
+        "termsOfServiceURL": "https://github.com/vitorcalvi/personaldb-memory-mcp/blob/main/TERMS.md",
+        "defaultPrompt": [
+          "Search my PersonalDB memories for relevant context.",
+          "Save this as a PersonalDB memory.",
+          "Show my recent PersonalDB memories.",
+          "Update this PersonalDB memory.",
+          "Delete this PersonalDB memory."
+        ],
+        "brandColor": "#111827"
+      }
+    }
+  }
+}
