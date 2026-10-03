@@ -14,6 +14,7 @@
     "local:smoke": "node scripts/local-smoke.mjs",
     "benchmark": "node scripts/benchmark.mjs",
     "plugin:build": "node scripts/build-plugin.mjs",
+    "plugin:build:app": "node scripts/build-app-plugin.mjs",
     "deploy": "wrangler deploy --env production",
     "plugin:source": "node scripts/build-source-bundle.mjs"
   },
