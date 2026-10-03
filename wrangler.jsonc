@@ -1,0 +1,41 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "personaldb-memory-mcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-03",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "EMBEDDING_DIMENSIONS": "384",
+    "RRF_K": "60"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "personaldb-memory",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "env": {
+    "production": {
+      "vars": {
+        "EMBEDDING_DIMENSIONS": "384",
+        "RRF_K": "60"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "personaldb-memory",
+          "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "vectorize": [
+        {
+          "binding": "VECTORIZE",
+          "index_name": "personaldb-memory-v1"
+        }
+      ]
+    }
+  }
+}
