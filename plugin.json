@@ -19,18 +19,80 @@
         "longDescription": "Store, retrieve, update, delete, and search private PersonalDB memories through an OAuth-protected MCP server with lexical and semantic retrieval.",
         "developerName": "Vitor Calvi",
         "category": "Productivity",
-        "capabilities": ["Read", "Write"],
+        "capabilities": [
+          "Search memories",
+          "Read memories",
+          "Write memories",
+          "Delete memories",
+          "Search knowledge"
+        ],
         "websiteURL": "https://github.com/vitorcalvi/personaldb-memory-mcp",
+        "supportURL": "https://github.com/vitorcalvi/personaldb-memory-mcp/blob/main/SUPPORT.md",
         "privacyPolicyURL": "https://github.com/vitorcalvi/personaldb-memory-mcp/blob/main/PRIVACY.md",
         "termsOfServiceURL": "https://github.com/vitorcalvi/personaldb-memory-mcp/blob/main/TERMS.md",
         "defaultPrompt": [
           "Search my PersonalDB memories for relevant context.",
           "Save this as a PersonalDB memory.",
-          "Show my recent PersonalDB memories.",
-          "Update this PersonalDB memory.",
-          "Delete this PersonalDB memory."
+          "Show my recent PersonalDB memories."
         ],
-        "brandColor": "#111827"
+        "brandColor": "#111827",
+        "composerIcon": "./assets/icon.svg",
+        "logo": "./assets/logo.svg"
+      },
+      "onboardingSkill": "./skills/personaldb-memory/SKILL.md",
+      "review": {
+        "test_cases": {
+          "positive": [
+            {
+              "description": "Search private memories by topic.",
+              "prompt": "Search my memories for technical reports.",
+              "tools_triggered": "memory_search",
+              "expected_behavior": "Call memory_search for the authenticated user and return matching memories or clearly state that no matches were found."
+            },
+            {
+              "description": "Create an explicit new memory.",
+              "prompt": "Save this as a memory: I prefer concise technical reports.",
+              "tools_triggered": "memory_add",
+              "expected_behavior": "Call memory_add with the supplied content and report the created memory result without inventing fields."
+            },
+            {
+              "description": "Browse recent private memories.",
+              "prompt": "List my recent PersonalDB memories.",
+              "tools_triggered": "memory_list",
+              "expected_behavior": "Call memory_list for the authenticated user and present the returned items or an empty-state result."
+            },
+            {
+              "description": "Check MCP memory service health.",
+              "prompt": "Check whether my PersonalDB memory service is healthy.",
+              "tools_triggered": "memory_health",
+              "expected_behavior": "Call memory_health and report the actual health response."
+            },
+            {
+              "description": "Search business knowledge separately from personal memory.",
+              "prompt": "Search my business knowledge for refund policy.",
+              "tools_triggered": "knowledge_search",
+              "expected_behavior": "Call knowledge_search and return matching authenticated business knowledge or clearly state that no matches were found."
+            }
+          ],
+          "negative": [
+            {
+              "description": "Do not invoke PersonalDB for unrelated public information.",
+              "prompt": "What is the capital of France?"
+            },
+            {
+              "description": "Do not persist content unless the user asks to remember or save it.",
+              "prompt": "Rewrite this sentence to sound more professional: We need this done soon."
+            },
+            {
+              "description": "Do not pretend an unsupported bulk-delete action exists.",
+              "prompt": "Delete every record in every PersonalDB collection at once."
+            }
+          ]
+        },
+        "commerce": false
+      },
+      "publication": {
+        "release_notes": "Initial ChatGPT plugin package for PersonalDB Memory with OAuth-backed MCP memory and knowledge tools."
       }
     }
   }
