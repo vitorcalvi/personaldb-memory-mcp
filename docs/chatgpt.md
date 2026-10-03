@@ -37,3 +37,19 @@ Cloudflare Access authenticates the user. The Worker reads `ctx.access.getIdenti
 ## Operator requirement
 
 Before users can connect, the product owner must configure Cloudflare Access once for the production Worker/hostname and enable Managed OAuth. See [`cloudflare-access.md`](cloudflare-access.md).
+
+## Web plugin packaging
+
+The ChatGPT web plugin ZIP must reference an existing ChatGPT App in `.app.json`. Do **not** package a remote MCP directly in `mcp.json` or `.mcp.json` for web distribution; OpenAI classifies those plugins as Desktop only even when the MCP URL is HTTPS.
+
+Build only after the PersonalDB MCP has been created as a ChatGPT App and you have its App ID:
+
+```bash
+PERSONALDB_CHATGPT_APP_ID=plugin_asdk_app_... npm run plugin:build
+```
+
+For a complete repository/source archive (not a ChatGPT install ZIP):
+
+```bash
+npm run plugin:source
+```

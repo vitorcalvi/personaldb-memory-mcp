@@ -1,6 +1,6 @@
 {
   "name": "personaldb-memory-mcp",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "private": true,
   "type": "module",
   "description": "Zero-config Cloudflare Access protected memory MCP using D1 FTS5 + Vectorize + RRF for ChatGPT, Ava Mobile, and My Thoughs",
@@ -14,7 +14,8 @@
     "local:smoke": "node scripts/local-smoke.mjs",
     "benchmark": "node scripts/benchmark.mjs",
     "plugin:build": "node scripts/build-plugin.mjs",
-    "deploy": "wrangler deploy --env production"
+    "deploy": "wrangler deploy --env production",
+    "plugin:source": "node scripts/build-source-bundle.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/server": "2.0.0",

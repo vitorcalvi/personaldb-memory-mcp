@@ -1,24 +1,26 @@
 # ChatGPT plugin packaging and installation
 
-PersonalDB Memory is packaged using OpenAI's portable Agent Plugins layout and includes a Codex compatibility manifest in the generated ZIP.
+PersonalDB has two different distributable artifacts. Do not confuse them.
 
-## Prerequisite: production MCP endpoint
+## 1. ChatGPT web plugin ZIP
 
-The plugin must point to a real public HTTPS Streamable HTTP MCP endpoint whose path ends in `/mcp`.
+The web plugin is intentionally small because the PersonalDB server runs remotely on Cloudflare. The ZIP contains metadata, skills, assets, and an **app reference**. It does not contain the Worker runtime or `node_modules`.
 
-Deploy PersonalDB first, then build the plugin package with the production URL:
+A web plugin must reference an existing ChatGPT App in `.app.json`. Directly declaring the remote MCP in `mcp.json` or `.mcp.json` makes the plugin **Desktop only**, even when the endpoint is remote HTTPS.
+
+First create/register the PersonalDB MCP as a ChatGPT App and obtain its App ID. Then build:
 
 ```bash
-PERSONALDB_MCP_URL=https://<your-worker-host>/mcp npm run plugin:build
+PERSONALDB_CHATGPT_APP_ID=plugin_asdk_app_... npm run plugin:build
 ```
 
 or:
 
 ```bash
-npm run plugin:build -- --mcp-url=https://<your-worker-host>/mcp
+npm run plugin:build -- --app-id=plugin_asdk_app_...
 ```
 
-The build refuses missing, non-HTTPS, or non-`/mcp` URLs so a broken placeholder package is not produced.
+The build refuses to run without a real App ID so it cannot silently generate the previous invalid web package.
 
 Output:
 
@@ -27,40 +29,47 @@ dist/personaldb-memory/
 dist/personaldb-memory-plugin.zip
 ```
 
-The ZIP contains:
+The ChatGPT ZIP contains:
 
-- `plugin.json` — portable Agent Plugins manifest
-- `mcp.json` — portable remote MCP declaration
-- `.codex-plugin/plugin.json` — compatibility manifest
-- `.mcp.json` — compatibility MCP declaration
+- `.codex-plugin/plugin.json` — native plugin manifest
+- `.app.json` — reference to the existing ChatGPT App ID
 - `skills/personaldb-memory/SKILL.md` — workflow instructions
-- `assets/icon.svg` and `assets/logo.svg` — install/listing assets
+- `assets/icon.svg` and `assets/logo.svg` — listing assets
 - privacy, terms, and support documents
+
+It intentionally does **not** contain `mcp.json` or `.mcp.json`.
+
+## 2. Complete source bundle
+
+For auditing, backup, self-hosting, or release distribution of the entire implementation:
+
+```bash
+npm run plugin:source
+```
+
+Output:
+
+```text
+dist/personaldb-memory-mcp-source.zip
+```
+
+That archive contains the Worker source, migrations, tests, build/deploy scripts, docs, skills, assets, manifests, and package lock. It is **not** the file to upload as a ChatGPT plugin.
 
 ## Install in ChatGPT
 
 When your ChatGPT account or workspace exposes plugin ZIP upload:
 
-1. Open ChatGPT on the web.
-2. Open Plugins / Admin > Plugins, depending on the account or workspace surface.
-3. Select Add.
-4. Choose Upload plugin.
-5. Upload `dist/personaldb-memory-plugin.zip`.
-6. Complete the OAuth connection to the PersonalDB MCP server.
-7. Test `memory_health`, then `memory_add`, then `memory_search`.
+1. Ensure the underlying PersonalDB ChatGPT App already exists and is available to your account/workspace.
+2. Build the plugin with that real App ID.
+3. Open ChatGPT web → Admin / Plugins → Add → Upload plugin.
+4. Upload `dist/personaldb-memory-plugin.zip`.
+5. Install/connect the referenced PersonalDB app and complete its Cloudflare authorization flow.
+6. Test `memory_health`, then `memory_add`, then `memory_search`.
 
-For developer testing, ChatGPT can also register the remote MCP server first and use Plugin Creator to create or refresh the plugin package.
+Installing a plugin does not create the referenced ChatGPT App and does not bypass its authentication or workspace permissions.
 
 ## Public submission readiness
 
-`plugin.json` includes listing metadata, support/privacy/terms URLs, icons, three starter prompts, exactly five positive review cases, exactly three negative review cases, and release notes.
-
-Before public submission you still need:
-
-- a stable production MCP URL
-- domain verification for the MCP host
-- a successful current MCP tool scan
-- a reviewer-accessible demo recording URL
-- verified developer or business identity and required attestations
+Before public distribution, the underlying PersonalDB App must be created/submitted and have a stable app identifier. Also verify production OAuth, MCP tool scan, privacy/terms/support URLs, developer identity, and any review attestations required by the current ChatGPT publishing flow.
 
 Do not put reviewer credentials, OAuth tokens, API keys, or private memory content in the repository or plugin ZIP.

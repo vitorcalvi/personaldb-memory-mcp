@@ -2,27 +2,14 @@ import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import process from 'node:process';
-import { URL } from 'node:url';
 
 const root = process.cwd();
-const cliUrl = process.argv.find((arg) => arg.startsWith('--mcp-url='))?.slice('--mcp-url='.length);
-const mcpUrl = cliUrl || process.env.PERSONALDB_MCP_URL;
+const cliAppId = process.argv.find((arg) => arg.startsWith('--app-id='))?.slice('--app-id='.length);
+const appId = (cliAppId || process.env.PERSONALDB_CHATGPT_APP_ID || '').trim();
 
-if (!mcpUrl) {
-  console.error('Missing MCP URL. Set PERSONALDB_MCP_URL=https://<host>/mcp or pass --mcp-url=https://<host>/mcp');
-  process.exit(2);
-}
-
-let parsed;
-try {
-  parsed = new URL(mcpUrl);
-} catch {
-  console.error('PERSONALDB_MCP_URL must be a valid URL.');
-  process.exit(2);
-}
-
-if (parsed.protocol !== 'https:' || !parsed.hostname || !parsed.pathname.endsWith('/mcp')) {
-  console.error('PERSONALDB_MCP_URL must be a public HTTPS URL whose path ends in /mcp.');
+if (!appId || /^<.*>$/.test(appId) || /replace|example|dummy/i.test(appId)) {
+  console.error('Missing real ChatGPT App ID. Set PERSONALDB_CHATGPT_APP_ID=<app-id> or pass --app-id=<app-id>.');
+  console.error('Do not use the MCP URL directly in a web plugin: OpenAI marks direct mcp.json/.mcp.json plugins Desktop only.');
   process.exit(2);
 }
 
@@ -37,79 +24,49 @@ await mkdir(path.join(pluginDir, 'skills', 'personaldb-memory'), { recursive: tr
 await mkdir(path.join(pluginDir, '.codex-plugin'), { recursive: true });
 await mkdir(path.join(pluginDir, 'assets'), { recursive: true });
 
-await cp(path.join(root, 'plugin.json'), path.join(pluginDir, 'plugin.json'));
-await cp(path.join(root, 'PRIVACY.md'), path.join(pluginDir, 'PRIVACY.md'));
-await cp(path.join(root, 'TERMS.md'), path.join(pluginDir, 'TERMS.md'));
-await cp(path.join(root, 'SUPPORT.md'), path.join(pluginDir, 'SUPPORT.md'));
+for (const file of ['PRIVACY.md', 'TERMS.md', 'SUPPORT.md']) {
+  await cp(path.join(root, file), path.join(pluginDir, file));
+}
 await cp(path.join(root, 'assets', 'icon.svg'), path.join(pluginDir, 'assets', 'icon.svg'));
 await cp(path.join(root, 'assets', 'logo.svg'), path.join(pluginDir, 'assets', 'logo.svg'));
-await cp(
-  path.join(root, 'skills', 'personaldb-memory', 'SKILL.md'),
-  path.join(pluginDir, 'skills', 'personaldb-memory', 'SKILL.md'),
-);
+await cp(path.join(root, 'skills', 'personaldb-memory', 'SKILL.md'), path.join(pluginDir, 'skills', 'personaldb-memory', 'SKILL.md'));
 
-const portableMcp = {
-  $schema: 'https://agent-plugins.org/schemas/1.0.0/mcp.schema.json',
-  mcpServers: {
-    personaldb_memory: {
-      type: 'streamable-http',
-      url: mcpUrl,
-    },
+// ChatGPT web plugins reference an already-created ChatGPT App by id.
+const appMap = {
+  apps: {
+    personaldb_memory: { id: appId },
   },
 };
-await writeFile(path.join(pluginDir, 'mcp.json'), `${JSON.stringify(portableMcp, null, 2)}\n`);
+await writeFile(path.join(pluginDir, '.app.json'), `${JSON.stringify(appMap, null, 2)}\n`);
 
-const compatibilityMcp = {
-  mcpServers: {
-    personaldb_memory: {
-      type: 'http',
-      url: mcpUrl,
-    },
-  },
-};
-await writeFile(path.join(pluginDir, '.mcp.json'), `${JSON.stringify(compatibilityMcp, null, 2)}\n`);
-
-const compatibilityManifest = {
+const openai = manifest.extensions?.['com.openai'] ?? {};
+const nativeManifest = {
   name: manifest.name,
   version: manifest.version,
   description: manifest.description,
+  author: manifest.author,
+  homepage: manifest.homepage,
+  repository: manifest.repository,
+  license: manifest.license,
+  keywords: manifest.keywords,
   skills: './skills/',
-  mcpServers: './.mcp.json',
-  interface: manifest.extensions?.['com.openai']?.interface,
-  extensions: {
-    'com.openai': {
-      onboardingSkill: manifest.extensions?.['com.openai']?.onboardingSkill,
-      review: manifest.extensions?.['com.openai']?.review,
-      publication: manifest.extensions?.['com.openai']?.publication,
-    },
-  },
+  apps: './.app.json',
+  interface: openai.interface,
 };
-await writeFile(
-  path.join(pluginDir, '.codex-plugin', 'plugin.json'),
-  `${JSON.stringify(compatibilityManifest, null, 2)}\n`,
-);
+await writeFile(path.join(pluginDir, '.codex-plugin', 'plugin.json'), `${JSON.stringify(nativeManifest, null, 2)}\n`);
 
 function makeZip() {
-  const nativeZip = spawnSync('zip', ['-qr', zipPath, pluginName], {
-    cwd: distRoot,
-    encoding: 'utf8',
-  });
+  const nativeZip = spawnSync('zip', ['-qr', zipPath, pluginName], { cwd: distRoot, encoding: 'utf8' });
   if (nativeZip.status === 0) return;
-
   for (const python of ['python3', 'python']) {
-    const fallback = spawnSync(python, ['-m', 'zipfile', '-c', zipPath, pluginName], {
-      cwd: distRoot,
-      encoding: 'utf8',
-    });
+    const fallback = spawnSync(python, ['-m', 'zipfile', '-c', zipPath, pluginName], { cwd: distRoot, encoding: 'utf8' });
     if (fallback.status === 0) return;
   }
-
   console.error('Could not create ZIP: neither `zip` nor Python zipfile is available.');
   process.exit(1);
 }
 
 makeZip();
-
 console.log(`Plugin directory: ${pluginDir}`);
 console.log(`Plugin ZIP: ${zipPath}`);
-console.log(`MCP URL: ${mcpUrl}`);
+console.log(`ChatGPT App ID: ${appId}`);
