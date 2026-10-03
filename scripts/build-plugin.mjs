@@ -2,6 +2,7 @@ import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import process from 'node:process';
+import { URL } from 'node:url';
 
 const root = process.cwd();
 const cliUrl = process.argv.find((arg) => arg.startsWith('--mcp-url='))?.slice('--mcp-url='.length);
