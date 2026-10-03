@@ -6,8 +6,8 @@ function token(sub){const now=Math.floor(Date.now()/1000);const h=enc({alg:'HS25
 async function wait(url){for(let i=0;i<60;i++){try{const r=await fetch(url);if(r.ok)return;}catch{ /* retry until ready */ } await new Promise(r=>setTimeout(r,250));}throw new Error('worker did not start');}
 function run(cmd,args){return new Promise((resolve,reject)=>{const p=spawn(cmd,args,{stdio:'inherit'});p.on('exit',c=>c===0?resolve():reject(new Error(`${cmd} exit ${c}`)));});}
 await run('npx',['wrangler','d1','migrations','apply','DB','--local']);
-const worker=spawn('npx',['wrangler','dev','--local','--port','8791','--var',`AUTH_HMAC_SECRET:${secret}`],{stdio:['ignore','pipe','pipe']});
-worker.stdout.on('data',d=>process.stdout.write(d));worker.stderr.on('data',d=>process.stderr.write(d));
+const worker=spawn('npx',['wrangler','dev','--local','--port','8791','--var',`AUTH_HMAC_SECRET:${secret}`],{stdio:'inherit',detached:true});
+worker.unref();
 try{
  await wait('http://127.0.0.1:8791/healthz');
  const a=token('user-a'), b=token('user-b');
@@ -24,4 +24,9 @@ try{
  r=await req('/v1/records/upsert',a,{method:'POST',body:JSON.stringify({id:idA,type:'memory',version:3,device_id:'device-a',content:'resurrect attempt',metadata:{}})}); if(r.status!==409)throw new Error(`deleted record resurrected: ${r.status}`);
  r=await req('/mcp',a,{method:'POST',headers:{'accept':'application/json, text/event-stream'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/list',params:{}})}); const m=await r.text(); if(!m.includes('memory_search')||!m.includes('personaldb_search'))throw new Error(`MCP tools missing: ${m.slice(0,200)}`);
  console.log('LOCAL_SMOKE_OK isolation idempotency tombstone fts fallback mcp');
-} finally {worker.kill('SIGTERM');}
+} finally {
+  if (worker.pid) {
+    try { process.kill(-worker.pid, 'SIGTERM'); } catch { /* already stopped */ }
+  }
+  await new Promise((resolve) => setTimeout(resolve, 300));
+}
