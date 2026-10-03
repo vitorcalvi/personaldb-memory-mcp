@@ -35,10 +35,14 @@ const zipPath = path.join(distRoot, `${pluginName}-plugin.zip`);
 await rm(distRoot, { recursive: true, force: true });
 await mkdir(path.join(pluginDir, 'skills', 'personaldb-memory'), { recursive: true });
 await mkdir(path.join(pluginDir, '.codex-plugin'), { recursive: true });
+await mkdir(path.join(pluginDir, 'assets'), { recursive: true });
 
 await cp(path.join(root, 'plugin.json'), path.join(pluginDir, 'plugin.json'));
 await cp(path.join(root, 'PRIVACY.md'), path.join(pluginDir, 'PRIVACY.md'));
 await cp(path.join(root, 'TERMS.md'), path.join(pluginDir, 'TERMS.md'));
+await cp(path.join(root, 'SUPPORT.md'), path.join(pluginDir, 'SUPPORT.md'));
+await cp(path.join(root, 'assets', 'icon.svg'), path.join(pluginDir, 'assets', 'icon.svg'));
+await cp(path.join(root, 'assets', 'logo.svg'), path.join(pluginDir, 'assets', 'logo.svg'));
 await cp(
   path.join(root, 'skills', 'personaldb-memory', 'SKILL.md'),
   path.join(pluginDir, 'skills', 'personaldb-memory', 'SKILL.md'),
@@ -72,6 +76,13 @@ const compatibilityManifest = {
   skills: './skills/',
   mcpServers: './.mcp.json',
   interface: manifest.extensions?.['com.openai']?.interface,
+  extensions: {
+    'com.openai': {
+      onboardingSkill: manifest.extensions?.['com.openai']?.onboardingSkill,
+      review: manifest.extensions?.['com.openai']?.review,
+      publication: manifest.extensions?.['com.openai']?.publication,
+    },
+  },
 };
 await writeFile(
   path.join(pluginDir, '.codex-plugin', 'plugin.json'),
