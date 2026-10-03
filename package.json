@@ -1,11 +1,11 @@
 {
   "name": "personaldb-memory-mcp",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
-  "description": "OAuth 2.1 remote memory MCP using Cloudflare D1 FTS5 + Vectorize + RRF for Ava Mobile, My Thoughs, and ChatGPT",
+  "description": "Zero-config Cloudflare Access protected memory MCP using D1 FTS5 + Vectorize + RRF for ChatGPT, Ava Mobile, and My Thoughs",
   "scripts": {
-    "dev": "wrangler dev --local --port 8787 --var AUTH_HMAC_SECRET:local-development-secret-change-me",
+    "dev": "wrangler dev --local --port 8787",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
@@ -13,12 +13,10 @@
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "local:smoke": "node scripts/local-smoke.mjs",
     "benchmark": "node scripts/benchmark.mjs",
-    "token": "node scripts/issue-token.mjs",
     "plugin:build": "node scripts/build-plugin.mjs",
     "deploy": "wrangler deploy --env production"
   },
   "dependencies": {
-    "@cloudflare/workers-oauth-provider": "1.2.1",
     "@modelcontextprotocol/server": "2.0.0",
     "agents": "0.26.0",
     "zod": "4.6.5"
