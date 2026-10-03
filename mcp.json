@@ -1,0 +1,9 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "personaldb-memory": {
+      "type": "streamable-http",
+      "url": "https://personaldb-memory-mcp-production.vitorcalvi.workers.dev/mcp"
+    }
+  }
+}
