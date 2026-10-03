@@ -15,16 +15,13 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
-      - name: Refuse web plugin build without ChatGPT App ID
-        run: |
-          if npm run plugin:build; then
-            echo "plugin:build unexpectedly succeeded without an App ID"
-            exit 1
-          fi
-      - name: Validate ChatGPT plugin package
-        env:
-          PERSONALDB_CHATGPT_APP_ID: plugin_asdk_app_test_fixture
+      - name: Validate ChatGPT portable plugin package
         run: npm run plugin:build
+      - name: Verify plugin ZIP structure
+        run: |
+          unzip -p dist/personaldb-memory-plugin.zip plugin.json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const j=JSON.parse(s);if(j.name!=='personaldb-memory')process.exit(1)})"
+          unzip -p dist/personaldb-memory-plugin.zip mcp.json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const j=JSON.parse(s);const x=j.mcpServers?.['personaldb-memory'];if(!x||x.type!=='streamable-http'||!x.url.startsWith('https://'))process.exit(1)})"
+          test -n "$(unzip -Z1 dist/personaldb-memory-plugin.zip | grep '^skills/personaldb-memory/SKILL.md$')"
       - name: Validate complete source bundle
         run: npm run plugin:source
       - name: Local Wrangler integration + isolation test
