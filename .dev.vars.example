@@ -1,2 +1,6 @@
-# Never commit the real value.
+# Never commit real secrets.
 AUTH_HMAC_SECRET=replace-with-at-least-32-random-bytes
+GITHUB_CLIENT_ID=replace-with-github-oauth-app-client-id
+GITHUB_CLIENT_SECRET=replace-with-github-oauth-app-client-secret
+# Optional: comma-separated GitHub logins allowed to authorize this deployment.
+ALLOWED_GITHUB_LOGINS=
