@@ -1,9 +1,9 @@
 {
   "name": "personaldb-memory-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "Cloudflare D1 FTS5 + Vectorize + RRF hybrid memory MCP for Ava Mobile and My Thoughs",
+  "description": "Cloudflare D1 FTS5 + Vectorize + RRF hybrid memory MCP for Ava Mobile, My Thoughs, and ChatGPT",
   "scripts": {
     "dev": "wrangler dev --local --port 8787 --var AUTH_HMAC_SECRET:local-development-secret-change-me",
     "typecheck": "tsc --noEmit",
@@ -17,6 +17,7 @@
     "deploy": "wrangler deploy --env production"
   },
   "dependencies": {
+    "@cloudflare/workers-oauth-provider": "1.2.1",
     "@modelcontextprotocol/server": "2.0.0",
     "agents": "0.26.0",
     "zod": "4.6.5"
