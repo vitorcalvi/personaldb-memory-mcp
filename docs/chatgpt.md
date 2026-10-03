@@ -4,23 +4,23 @@
 
 PersonalDB is designed to require no technical configuration from the user.
 
-1. Select **Set up PersonalDB Memory** in ChatGPT.
-2. ChatGPT opens the Cloudflare Access authorization flow.
-3. Sign in with your Cloudflare account.
-4. Review the request and choose **Allow**.
+1. Install **PersonalDB Memory** in ChatGPT.
+2. ChatGPT connects to the packaged PersonalDB MCP endpoint.
+3. ChatGPT opens the Cloudflare Access authorization flow when authentication is required.
+4. Sign in with your Cloudflare account and approve access.
 5. Return to ChatGPT. PersonalDB is ready.
 
-The user does not need a PersonalDB API key, GitHub account, OAuth client id/secret, Wrangler, D1 configuration, Vectorize configuration, or an MCP config file.
+The user does not need a PersonalDB API key, GitHub account, OAuth client id/secret, Wrangler, D1 configuration, Vectorize configuration, or a hand-written MCP config file.
 
-## MCP URL
+## Production MCP URL
 
-The published ChatGPT app/plugin contains the production MCP URL:
+The installable plugin contains this production MCP endpoint in root `mcp.json`:
 
 ```text
-https://<production-host>/mcp
+https://personaldb-memory-mcp-production.vitorcalvi.workers.dev/mcp
 ```
 
-For development-only manual MCP setup, use the same URL. Cloudflare Access Managed OAuth provides the OAuth discovery/challenge and authorization flow at the edge.
+Cloudflare Access Managed OAuth provides the authentication discovery/challenge and authorization flow at the edge.
 
 ## First tests
 
@@ -38,15 +38,21 @@ Cloudflare Access authenticates the user. The Worker reads `ctx.access.getIdenti
 
 Before users can connect, the product owner must configure Cloudflare Access once for the production Worker/hostname and enable Managed OAuth. See [`cloudflare-access.md`](cloudflare-access.md).
 
-## Web plugin packaging
+## Plugin packaging
 
-The ChatGPT web plugin ZIP must reference an existing ChatGPT App in `.app.json`. Do **not** package a remote MCP directly in `mcp.json` or `.mcp.json` for web distribution; OpenAI classifies those plugins as Desktop only even when the MCP URL is HTTPS.
-
-Build only after the PersonalDB MCP has been created as a ChatGPT App and you have its App ID:
+Build the current portable Agent Plugins package directly:
 
 ```bash
-PERSONALDB_CHATGPT_APP_ID=plugin_asdk_app_... npm run plugin:build
+npm run plugin:build
 ```
+
+The output is:
+
+```text
+dist/personaldb-memory-plugin.zip
+```
+
+The ZIP uses root `plugin.json` plus root `mcp.json`. It does not require a pre-created ChatGPT App ID and does not contain `.app.json`.
 
 For a complete repository/source archive (not a ChatGPT install ZIP):
 
