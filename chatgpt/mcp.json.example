@@ -2,10 +2,7 @@
   "mcpServers": {
     "personaldb-memory": {
       "type": "streamable-http",
-      "url": "https://personaldb-memory-mcp.<account>.workers.dev/mcp",
-      "headers": {
-        "Authorization": "Bearer ${PERSONALDB_TOKEN}"
-      }
+      "url": "https://personaldb-memory-mcp.<account>.workers.dev/mcp"
     }
   }
 }
