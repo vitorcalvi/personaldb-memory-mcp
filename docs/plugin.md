@@ -2,42 +2,39 @@
 
 PersonalDB has two different distributable artifacts. Do not confuse them.
 
-## 1. ChatGPT web plugin ZIP
+## 1. Installable ChatGPT plugin ZIP
 
-The web plugin is intentionally small because the PersonalDB server runs remotely on Cloudflare. The ZIP contains metadata, skills, assets, and an **app reference**. It does not contain the Worker runtime or `node_modules`.
+The installable ZIP follows the current portable Agent Plugins format. It contains the plugin manifest, remote MCP declaration, skill, listing assets, and policy documents. The Cloudflare Worker itself remains remote and is not bundled.
 
-A web plugin must reference an existing ChatGPT App in `.app.json`. Directly declaring the remote MCP in `mcp.json` or `.mcp.json` makes the plugin **Desktop only**, even when the endpoint is remote HTTPS.
-
-First create/register the PersonalDB MCP as a ChatGPT App and obtain its App ID. Then build:
+Build it with:
 
 ```bash
-PERSONALDB_CHATGPT_APP_ID=plugin_asdk_app_... npm run plugin:build
+npm run plugin:build
 ```
-
-or:
-
-```bash
-npm run plugin:build -- --app-id=plugin_asdk_app_...
-```
-
-The build refuses to run without a real App ID so it cannot silently generate the previous invalid web package.
 
 Output:
 
 ```text
-dist/personaldb-memory/
 dist/personaldb-memory-plugin.zip
 ```
 
-The ChatGPT ZIP contains:
+The ZIP root contains:
 
-- `.codex-plugin/plugin.json` — native plugin manifest
-- `.app.json` — reference to the existing ChatGPT App ID
+- `plugin.json` — canonical Agent Plugins manifest
+- `mcp.json` — production `streamable-http` MCP endpoint
 - `skills/personaldb-memory/SKILL.md` — workflow instructions
 - `assets/icon.svg` and `assets/logo.svg` — listing assets
-- privacy, terms, and support documents
+- `PRIVACY.md`, `TERMS.md`, and `SUPPORT.md`
 
-It intentionally does **not** contain `mcp.json` or `.mcp.json`.
+The package intentionally does **not** include `.app.json`, does not require a pre-created `plugin_asdk_app...` id, and does not emit a second legacy MCP declaration. This avoids ambiguous plugin roots and incompatible portable/legacy MCP mappings.
+
+The MCP endpoint currently packaged is:
+
+```text
+https://personaldb-memory-mcp-production.vitorcalvi.workers.dev/mcp
+```
+
+Authentication is handled by the MCP service through Cloudflare Access Managed OAuth.
 
 ## 2. Complete source bundle
 
@@ -57,19 +54,16 @@ That archive contains the Worker source, migrations, tests, build/deploy scripts
 
 ## Install in ChatGPT
 
-When your ChatGPT account or workspace exposes plugin ZIP upload:
+When your account exposes plugin ZIP upload:
 
-1. Ensure the underlying PersonalDB ChatGPT App already exists and is available to your account/workspace.
-2. Build the plugin with that real App ID.
-3. Open ChatGPT web → Admin / Plugins → Add → Upload plugin.
-4. Upload `dist/personaldb-memory-plugin.zip`.
-5. Install/connect the referenced PersonalDB app and complete its Cloudflare authorization flow.
-6. Test `memory_health`, then `memory_add`, then `memory_search`.
+1. Run `npm run plugin:build`.
+2. Open ChatGPT → Plugins → Add → Upload plugin.
+3. Upload `dist/personaldb-memory-plugin.zip`.
+4. Complete the Cloudflare authorization flow when ChatGPT connects to the MCP server.
+5. Test `memory_health`, then `memory_add`, then `memory_search`.
 
-Installing a plugin does not create the referenced ChatGPT App and does not bypass its authentication or workspace permissions.
+If you deliberately want to reference an already-registered ChatGPT MCP app instead, use an `.app.json`-based package as a separate distribution mode. Do not mix that mode with the direct portable `mcp.json` package.
 
 ## Public submission readiness
 
-Before public distribution, the underlying PersonalDB App must be created/submitted and have a stable app identifier. Also verify production OAuth, MCP tool scan, privacy/terms/support URLs, developer identity, and any review attestations required by the current ChatGPT publishing flow.
-
-Do not put reviewer credentials, OAuth tokens, API keys, or private memory content in the repository or plugin ZIP.
+For public directory submission, verify production OAuth, the MCP tool scan, privacy/terms/support URLs, developer identity, and required review materials. Keep reviewer credentials, OAuth tokens, API keys, and private memory content out of the repository and ZIP.
