@@ -1,6 +1,6 @@
 {
   "name": "personaldb-memory-mcp",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "OAuth 2.1 remote memory MCP using Cloudflare D1 FTS5 + Vectorize + RRF for Ava Mobile, My Thoughs, and ChatGPT",
@@ -14,6 +14,7 @@
     "local:smoke": "node scripts/local-smoke.mjs",
     "benchmark": "node scripts/benchmark.mjs",
     "token": "node scripts/issue-token.mjs",
+    "plugin:build": "node scripts/build-plugin.mjs",
     "deploy": "wrangler deploy --env production"
   },
   "dependencies": {
