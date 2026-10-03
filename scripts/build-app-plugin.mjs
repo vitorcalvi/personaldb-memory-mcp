@@ -27,7 +27,9 @@ const manifest = JSON.parse(await readFile(path.join(root, 'plugin.json'), 'utf8
 const openai = manifest.extensions?.['com.openai'];
 if (!openai?.interface) fail('plugin.json must include extensions.com.openai.interface.');
 
-const webManifest = structuredClone(manifest);
+// Manifest data is JSON-only, so JSON round-tripping is a portable deep clone and
+// avoids relying on a runtime global that the repository's ESLint environment does not expose.
+const webManifest = JSON.parse(JSON.stringify(manifest));
 webManifest.extensions['com.openai'].apps = './.app.json';
 webManifest.extensions['com.openai'].publication = {
   ...(webManifest.extensions['com.openai'].publication ?? {}),
