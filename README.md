@@ -1,55 +1,84 @@
 # PersonalDB Memory MCP
 
-Production-oriented hybrid retrieval backend for **Ava Mobile**, **My Thoughs**, and **ChatGPT**, built on Cloudflare Workers + D1 FTS5 + Vectorize + weighted Reciprocal Rank Fusion (RRF).
+Production-oriented private memory and hybrid retrieval for **ChatGPT**, **Ava Mobile**, and **My Thoughs**, built on Cloudflare Workers + D1 FTS5 + Vectorize + weighted Reciprocal Rank Fusion (RRF).
+
+## Product goal
+
+End-user setup is intentionally minimal:
+
+```text
+Install / Set up PersonalDB Memory
+        ↓
+Sign in with Cloudflare
+        ↓
+Allow access
+        ↓
+Done
+```
+
+There are **no PersonalDB API keys, no GitHub login, no OAuth client secrets, and no end-user configuration**.
+
+A Cloudflare account is the user identity. Cloudflare Access Managed OAuth handles OAuth 2.0/2.1 for ChatGPT and other non-browser clients, and the Worker reads the authenticated identity from `ctx.access`.
 
 ## Architecture
 
 ```text
-ChatGPT ── OAuth 2.1 ───────────────┐
-                                    ▼
-Ava Mobile / My Thoughs ── REST ── Cloudflare Worker
-                                    │
-                                    ├── D1 records/chunks/tombstones (canonical)
-                                    ├── D1 FTS5 BM25 (lexical)
-                                    └── Vectorize (semantic; namespace per user)
-                                              │
-                                   parallel retrieval → weighted RRF → top_k
+ChatGPT / mobile OAuth client
+          │
+          ▼
+Cloudflare Access Managed OAuth
+Cloudflare identity provider
+          │
+          ▼
+PersonalDB Worker
+  ├─ ctx.access.getIdentity()
+  ├─ opaque PersonalDB user id derived from Access user_uuid
+  ├─ D1 records/chunks/tombstones (canonical)
+  ├─ D1 FTS5 BM25 (lexical)
+  └─ Vectorize (semantic; namespace per PersonalDB user)
+             │
+             └─ parallel retrieval → weighted RRF → top_k
 ```
 
-The cloud never requires embedding inference. Mobile generates embeddings locally. The default index is 384 dimensions; every client using one Vectorize index must use the same embedding model/dimension.
+The cloud never requires embedding inference. Mobile clients may generate embeddings locally. The default Vectorize index is 384 dimensions; all clients writing vectors to one index must use the same embedding model/dimension.
 
-## ChatGPT-ready MCP authentication
+## Authentication and isolation
 
-`POST /mcp` is a Streamable HTTP MCP protected by OAuth 2.1 using `@cloudflare/workers-oauth-provider`.
+Cloudflare Access is the only production authentication boundary.
 
-The deployment publishes OAuth protected-resource and authorization-server metadata, supports PKCE, CIMD and Dynamic Client Registration, refresh tokens, and audience-bound access tokens. GitHub OAuth is used only as the upstream identity step; the stable numeric GitHub account id becomes the PersonalDB tenant id. Repository access is not required.
-
-The OAuth consent flow requests:
-
-- `memory.read`
-- `memory.write`
-
-For a private deployment, set `ALLOWED_GITHUB_LOGINS` to a comma-separated allow-list.
-
-The existing HMAC bearer authentication remains on `/v1/*` so Ava Mobile / My Thoughs do not need an auth migration just to enable ChatGPT.
+- ChatGPT and other MCP clients authenticate through **Access Managed OAuth**.
+- Mobile/REST clients use the same OAuth flow; they do not receive a PersonalDB API key.
+- The Worker fails closed when `ctx.access` is absent.
+- The Access `user_uuid` is hashed into an opaque `usr_...` PersonalDB tenant id; email is not used as the database key.
+- Request bodies may never supply `user_id`.
+- Every D1 query is scoped by the authenticated PersonalDB user id.
+- Every Vectorize query uses a per-user namespace and results are joined back through D1 as a second isolation boundary.
 
 ## MCP tools
 
-Existing My Thoughs names remain unchanged:
+Personal memory:
 
-`memory_add`, `memory_get`, `memory_search`, `memory_list`, `memory_update`, `memory_delete`, `memory_health`.
+- `memory_add`
+- `memory_get`
+- `memory_search`
+- `memory_list`
+- `memory_update`
+- `memory_delete`
+- `memory_health`
 
-Ava business knowledge tools:
+Business knowledge:
 
-`knowledge_search`, `knowledge_list`.
+- `knowledge_search`
+- `knowledge_list`
 
-Lower-level tools:
+Lower-level:
 
-`personaldb_search`, `personaldb_sync`.
+- `personaldb_search`
+- `personaldb_sync`
 
-## PersonalDB REST contract
+## REST contract
 
-Authenticated REST endpoints (HMAC bearer token; `user_id` is never accepted in a body):
+The same Cloudflare Access identity protects the REST endpoints:
 
 - `POST /v1/records/upsert`
 - `GET /v1/records/:id`
@@ -60,31 +89,22 @@ Authenticated REST endpoints (HMAC bearer token; `user_id` is never accepted in 
 
 Writes are versioned/idempotent. Deletion writes a tombstone and the same id cannot be resurrected by a later sync. Sync is cursor-based and incremental; whole SQLite files are never uploaded.
 
-## Retrieval
-
-- Lexical: D1 FTS5 + `bm25()`
-- Semantic: Vectorize only when the client supplies a query vector
-- Fusion: weighted RRF, default `k=60`
-- Ava hook: title-token match boost
-- My Thoughs hook: bounded importance/confidence boost
-- No vector / Vectorize unavailable: FTS-only
-- Empty/unusable lexical query + vector: vector-only
-
-Vectorize uses one shared index. Each verified user gets a SHA-256-derived namespace. Vector hits are joined back through D1 with the verified `user_id`, providing a second isolation boundary.
-
 ## Local development
+
+Local development simulates a Cloudflare Access user through `wrangler.jsonc -> access.dev`.
 
 ```bash
 npm install
 npm run check
 npm run local:smoke
+npm run dev
 ```
 
-`local:smoke` verifies cross-user REST isolation, FTS fallback, idempotency, tombstone/no-resurrection behavior, and OAuth MCP discovery/challenge behavior.
+`local:smoke` verifies authenticated MCP startup, cross-user data isolation using two simulated Access identities, incremental sync, FTS fallback, deletion/tombstone behavior, and no-resurrection semantics.
 
-## Deploy to Cloudflare
+## Deploy
 
-Wrangler authentication is required.
+Authenticate Wrangler once as the product owner:
 
 ```bash
 npx wrangler login
@@ -92,77 +112,55 @@ npm run check
 bash scripts/provision.sh
 ```
 
-For an existing deployment, ensure `wrangler.jsonc` contains a production `OAUTH_KV` binding as well as the D1 and Vectorize bindings.
+The provisioning script creates or reuses D1 and Vectorize, applies migrations, and deploys the Worker. It does **not** create API keys or application OAuth secrets.
 
-Create a GitHub OAuth App with callback URL:
+### One-time Cloudflare Access setup
 
-```text
-https://<your-worker-host>/oauth/github/callback
-```
+After deployment, configure the Worker/hostname in Cloudflare Zero Trust:
 
-Store secrets:
+1. Protect the Worker or production hostname with **Cloudflare Access**.
+2. Select **Cloudflare** as the identity provider.
+3. For a public end-user product, turn **off** `Restrict to account members` so users can sign in with their own Cloudflare accounts rather than needing membership in your Cloudflare account.
+4. Add an **Allow / Everyone** policy for authenticated users.
+5. Enable **Managed OAuth** on the Access application.
 
-```bash
-npx wrangler secret put GITHUB_CLIENT_ID --env production
-npx wrangler secret put GITHUB_CLIENT_SECRET --env production
-openssl rand -hex 32 | npx wrangler secret put AUTH_HMAC_SECRET --env production
-```
-
-Optional private allow-list:
-
-```bash
-npx wrangler secret put ALLOWED_GITHUB_LOGINS --env production
-```
-
-Then deploy:
-
-```bash
-npm run deploy
-```
+This is product-owner infrastructure setup, not end-user configuration. See [`docs/cloudflare-access.md`](docs/cloudflare-access.md).
 
 ## Connect ChatGPT
 
-Create a custom MCP/app in ChatGPT using only the remote MCP URL:
+The production MCP URL is simply:
 
 ```text
-https://<your-worker-host>/mcp
+https://<your-production-host>/mcp
 ```
 
-Do not configure a static Authorization header. ChatGPT follows OAuth discovery and opens the GitHub-backed authorization flow automatically.
+ChatGPT follows the OAuth challenge exposed by Cloudflare Access Managed OAuth, opens Cloudflare sign-in, and reconnects with the issued OAuth token. PersonalDB itself does not run an OAuth authorization server.
 
-Recommended first tests:
-
-```text
-Use PersonalDB Memory to run memory_health.
-Use PersonalDB Memory to add a memory: "I prefer concise technical reports."
-Search my memories for "technical reports".
-```
-
-See [`docs/chatgpt.md`](docs/chatgpt.md) for the complete setup.
+See [`docs/chatgpt.md`](docs/chatgpt.md).
 
 ## Mobile sync guidance
 
-Keep existing SQLite intact. Add a sync queue/cursor layer:
+Keep existing SQLite local-first storage intact:
 
 1. Local transaction commits first.
 2. Enqueue changed record id/version + on-device embedding.
 3. Upload incremental changed records only.
 4. Save server cursor per device.
-5. Pull `/v1/sync` from cursor and apply newer versions/tombstones locally.
+5. Pull `/v1/sync` from the cursor and apply newer versions/tombstones locally.
 
-Do not upload SQLite database files.
+Mobile clients authenticate to the same Access-protected origin using OAuth; never ship a shared PersonalDB secret in the app.
 
 ## Benchmark
 
 ```bash
 PERSONALDB_URL=https://... \
-PERSONALDB_TOKEN=... \
+PERSONALDB_ACCESS_TOKEN='<oauth-access-token>' \
 BENCH_QUERIES='[{"query":"refund policy","expected":["record-id"]}]' \
 npm run benchmark
 ```
 
-Outputs p50/p95 latency, Recall@k, D1 rows read, and queried vector dimensions.
+`PERSONALDB_ACCESS_TOKEN` is an OAuth access token for operator testing, not a long-lived API key. It is unnecessary when benchmarking a local `access.dev` instance.
 
 ## Security
 
-See [`SECURITY.md`](SECURITY.md). No secret, token, raw memory, or vector is logged.
+See [`SECURITY.md`](SECURITY.md). PersonalDB does not log API keys because it does not issue them. Do not log Access assertions, OAuth bearer tokens, raw private memory, or vectors.

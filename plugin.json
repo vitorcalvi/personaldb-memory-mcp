@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "personaldb-memory",
-  "version": "0.3.0",
-  "description": "Private persistent memory and hybrid search for ChatGPT, backed by PersonalDB over MCP.",
+  "version": "0.4.0",
+  "description": "Private persistent memory and hybrid search for ChatGPT with zero-config Cloudflare account sign-in.",
   "author": {
     "name": "Vitor Calvi",
     "url": "https://github.com/vitorcalvi"
@@ -10,13 +10,19 @@
   "homepage": "https://github.com/vitorcalvi/personaldb-memory-mcp",
   "repository": "https://github.com/vitorcalvi/personaldb-memory-mcp",
   "license": "MIT",
-  "keywords": ["memory", "mcp", "personaldb", "retrieval", "chatgpt"],
+  "keywords": [
+    "memory",
+    "mcp",
+    "personaldb",
+    "retrieval",
+    "chatgpt"
+  ],
   "extensions": {
     "com.openai": {
       "interface": {
         "displayName": "PersonalDB Memory",
         "shortDescription": "Private persistent memory and retrieval for ChatGPT.",
-        "longDescription": "Store, retrieve, update, delete, and search private PersonalDB memories through an OAuth-protected MCP server with lexical and semantic retrieval.",
+        "longDescription": "Store, retrieve, update, delete, and search private PersonalDB memories through a Cloudflare Access Managed OAuth-protected MCP server. End users sign in with a Cloudflare account; no PersonalDB API keys or GitHub login are required.",
         "developerName": "Vitor Calvi",
         "category": "Productivity",
         "capabilities": [
@@ -92,7 +98,7 @@
         "commerce": false
       },
       "publication": {
-        "release_notes": "Initial ChatGPT plugin package for PersonalDB Memory with OAuth-backed MCP memory and knowledge tools."
+        "release_notes": "Cloudflare-account sign-in via Access Managed OAuth; removed GitHub OAuth, PersonalDB API keys/HMAC auth, and OAuth KV. Added fail-closed ctx.access identity isolation and zero-config onboarding."
       }
     }
   }

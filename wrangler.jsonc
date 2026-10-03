@@ -8,12 +8,16 @@
     "EMBEDDING_DIMENSIONS": "384",
     "RRF_K": "60"
   },
-  "kv_namespaces": [
-    {
-      "binding": "OAUTH_KV",
-      "id": "00000000000000000000000000000000"
+  "access": {
+    "dev": {
+      "aud": "personaldb-local",
+      "identity": {
+        "user_uuid": "local-personaldb-user",
+        "email": "local@personaldb.invalid",
+        "name": "Local PersonalDB User"
+      }
     }
-  ],
+  },
   "d1_databases": [
     {
       "binding": "DB",
@@ -28,12 +32,6 @@
         "EMBEDDING_DIMENSIONS": "384",
         "RRF_K": "60"
       },
-      "kv_namespaces": [
-        {
-          "binding": "OAUTH_KV",
-          "id": "REPLACE_WITH_OAUTH_KV_ID"
-        }
-      ],
       "d1_databases": [
         {
           "binding": "DB",

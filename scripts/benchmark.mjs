@@ -1,8 +1,52 @@
 import { performance } from 'node:perf_hooks';
-const base=process.env.PERSONALDB_URL, token=process.env.PERSONALDB_TOKEN;
-if(!base||!token){console.error('Set PERSONALDB_URL and PERSONALDB_TOKEN');process.exit(2);}
-const queries=JSON.parse(process.env.BENCH_QUERIES || '[{"query":"refund policy","expected":[]}]');
-const lat=[];let hits=0,total=0,d1=0,dims=0;
-for(const q of queries){const t=performance.now();const r=await fetch(`${base.replace(/\/$/,'')}/v1/search`,{method:'POST',headers:{authorization:`Bearer ${token}`,'content-type':'application/json','x-benchmark':'1'},body:JSON.stringify({query:q.query,vector:q.vector,top_k:q.top_k||10,type:q.type})});const body=await r.json();lat.push(performance.now()-t);d1+=body.metrics?.d1_rows_read||0;dims+=body.metrics?.vector_dimensions_queried||0;const ids=new Set((body.results||[]).map(x=>x.id));for(const id of q.expected||[]){total++;if(ids.has(id))hits++;}}
-lat.sort((a,b)=>a-b);const pct=p=>lat[Math.min(lat.length-1,Math.floor((lat.length-1)*p))]||0;
-console.log(JSON.stringify({queries:lat.length,p50_ms:+pct(.5).toFixed(2),p95_ms:+pct(.95).toFixed(2),recall_at_k:total?hits/total:null,d1_rows_read:d1,vector_dimensions_queried:dims},null,2));
+
+const base = process.env.PERSONALDB_URL;
+const accessToken = process.env.PERSONALDB_ACCESS_TOKEN;
+if (!base) {
+  console.error('Set PERSONALDB_URL. For production, optionally provide a Cloudflare Access OAuth token in PERSONALDB_ACCESS_TOKEN.');
+  process.exit(2);
+}
+
+const queries = JSON.parse(process.env.BENCH_QUERIES || '[{"query":"refund policy","expected":[]}]');
+const latencies = [];
+let hits = 0;
+let total = 0;
+let d1Rows = 0;
+let vectorDimensions = 0;
+
+for (const query of queries) {
+  const headers = { 'content-type': 'application/json', 'x-benchmark': '1' };
+  if (accessToken) headers.authorization = `Bearer ${accessToken}`;
+  const started = performance.now();
+  const response = await fetch(`${base.replace(/\/$/, '')}/v1/search`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      query: query.query,
+      vector: query.vector,
+      top_k: query.top_k || 10,
+      type: query.type,
+    }),
+  });
+  if (!response.ok) throw new Error(`benchmark request failed: ${response.status} ${await response.text()}`);
+  const body = await response.json();
+  latencies.push(performance.now() - started);
+  d1Rows += body.metrics?.d1_rows_read || 0;
+  vectorDimensions += body.metrics?.vector_dimensions_queried || 0;
+  const ids = new Set((body.results || []).map((item) => item.id));
+  for (const id of query.expected || []) {
+    total += 1;
+    if (ids.has(id)) hits += 1;
+  }
+}
+
+latencies.sort((a, b) => a - b);
+const percentile = (p) => latencies[Math.min(latencies.length - 1, Math.floor((latencies.length - 1) * p))] || 0;
+console.log(JSON.stringify({
+  queries: latencies.length,
+  p50_ms: +percentile(0.5).toFixed(2),
+  p95_ms: +percentile(0.95).toFixed(2),
+  recall_at_k: total ? hits / total : null,
+  d1_rows_read: d1Rows,
+  vector_dimensions_queried: vectorDimensions,
+}, null, 2));
