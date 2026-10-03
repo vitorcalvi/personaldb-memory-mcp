@@ -2,11 +2,6 @@ name: Build ChatGPT Plugin
 
 on:
   workflow_dispatch:
-    inputs:
-      chatgpt_app_id:
-        description: Existing ChatGPT App ID for the PersonalDB MCP
-        required: true
-        type: string
 
 permissions:
   contents: read
@@ -23,9 +18,12 @@ jobs:
       - run: npm ci
       - run: npm run check
       - name: Build installable plugin ZIP
-        env:
-          PERSONALDB_CHATGPT_APP_ID: ${{ inputs.chatgpt_app_id }}
         run: npm run plugin:build
+      - name: Verify archive root
+        run: |
+          unzip -l dist/personaldb-memory-plugin.zip
+          unzip -p dist/personaldb-memory-plugin.zip plugin.json >/dev/null
+          unzip -p dist/personaldb-memory-plugin.zip mcp.json >/dev/null
       - name: Upload installable plugin
         uses: actions/upload-artifact@v4
         with:
