@@ -1,0 +1,2 @@
+# Never commit the real value.
+AUTH_HMAC_SECRET=replace-with-at-least-32-random-bytes
