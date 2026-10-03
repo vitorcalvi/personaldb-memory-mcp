@@ -78,14 +78,26 @@ await writeFile(
   `${JSON.stringify(compatibilityManifest, null, 2)}\n`,
 );
 
-const zip = spawnSync('zip', ['-qr', zipPath, pluginName], {
-  cwd: distRoot,
-  encoding: 'utf8',
-});
-if (zip.status !== 0) {
-  console.error(zip.stderr || 'zip command failed. Install the zip utility and retry.');
-  process.exit(zip.status || 1);
+function makeZip() {
+  const nativeZip = spawnSync('zip', ['-qr', zipPath, pluginName], {
+    cwd: distRoot,
+    encoding: 'utf8',
+  });
+  if (nativeZip.status === 0) return;
+
+  for (const python of ['python3', 'python']) {
+    const fallback = spawnSync(python, ['-m', 'zipfile', '-c', zipPath, pluginName], {
+      cwd: distRoot,
+      encoding: 'utf8',
+    });
+    if (fallback.status === 0) return;
+  }
+
+  console.error('Could not create ZIP: neither `zip` nor Python zipfile is available.');
+  process.exit(1);
 }
+
+makeZip();
 
 console.log(`Plugin directory: ${pluginDir}`);
 console.log(`Plugin ZIP: ${zipPath}`);
