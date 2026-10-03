@@ -3,11 +3,17 @@
   "name": "personaldb-memory-mcp",
   "main": "src/index.ts",
   "compatibility_date": "2026-10-03",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "vars": {
     "EMBEDDING_DIMENSIONS": "384",
     "RRF_K": "60"
   },
+  "kv_namespaces": [
+    {
+      "binding": "OAUTH_KV",
+      "id": "00000000000000000000000000000000"
+    }
+  ],
   "d1_databases": [
     {
       "binding": "DB",
@@ -22,6 +28,12 @@
         "EMBEDDING_DIMENSIONS": "384",
         "RRF_K": "60"
       },
+      "kv_namespaces": [
+        {
+          "binding": "OAUTH_KV",
+          "id": "REPLACE_WITH_OAUTH_KV_ID"
+        }
+      ],
       "d1_databases": [
         {
           "binding": "DB",
